@@ -1,0 +1,207 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+////////////////////////////////////////////////////////////
+// RESTAURANTS
+// Representa cada restaurante o sucursal que usa el sistema.
+// Permite escalar a múltiples restaurantes (SaaS).
+////////////////////////////////////////////////////////////
+model Restaurant {
+  id        String   @id @default(uuid())
+  name      String
+  address   String
+  phone     String?
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+
+  users     User[]
+  categories Category[]
+  products  Product[]
+  orders    Order[]
+  tables    Table?
+}
+
+////////////////////////////////////////////////////////////
+// USERS
+// Maneja todas las personas que usan el sistema.
+// Incluye clientes, cocineros, meseros y administradores.
+////////////////////////////////////////////////////////////
+model User {
+  id        String   @id @default(uuid())
+  name      String
+  email     String   @unique
+  password  String
+  role      UserRole
+  createdAt DateTime @default(now())
+
+  restaurant   Restaurant @relation(fields: [restaurantId], references: [id])
+  restaurantId String
+
+  orders Order[] @relation("CustomerOrders")
+}
+
+////////////////////////////////////////////////////////////
+// CATEGORIES
+// Organiza el menú del restaurante (bebidas, platos, postres).
+////////////////////////////////////////////////////////////
+model Category {
+  id           String   @id @default(uuid())
+  name         String
+  isActive     Boolean  @default(true)
+
+  restaurant   Restaurant @relation(fields: [restaurantId], references: [id])
+  restaurantId String
+
+  products Product[]
+}
+
+////////////////////////////////////////////////////////////
+// PRODUCTS
+// Representa los platos o productos que el restaurante vende.
+////////////////////////////////////////////////////////////
+model Product {
+  id           String   @id @default(uuid())
+  name         String
+  description  String?
+  price        Decimal  @db.Decimal(10,2)
+  isAvailable  Boolean  @default(true)
+  createdAt    DateTime @default(now())
+
+  restaurant   Restaurant @relation(fields: [restaurantId], references: [id])
+  restaurantId String
+
+  category     Category @relation(fields: [categoryId], references: [id])
+  categoryId   String
+
+  orderItems OrderItem[]
+}
+
+////////////////////////////////////////////////////////////
+// ORDERS
+// Tabla central del sistema.
+// Representa un pedido completo realizado por un cliente.
+////////////////////////////////////////////////////////////
+model Order {
+  id        String      @id @default(uuid())
+  status    OrderStatus @default(PENDING)
+  total     Decimal     @db.Decimal(10,2)
+  createdAt DateTime    @default(now())
+
+  restaurant   Restaurant @relation(fields: [restaurantId], references: [id])
+  restaurantId String
+
+  customer   User? @relation("CustomerOrders", fields: [customerId], references: [id])
+  customerId String?
+
+  items        OrderItem[]
+  payments     Payment[]
+  statusHistory OrderStatusHistory[]
+}
+
+////////////////////////////////////////////////////////////
+// ORDER ITEMS
+// Detalle de productos dentro de un pedido.
+// Permite que un pedido tenga múltiples productos.
+////////////////////////////////////////////////////////////
+model OrderItem {
+  id        String   @id @default(uuid())
+  quantity  Int
+  price     Decimal  @db.Decimal(10,2)
+
+  order     Order   @relation(fields: [orderId], references: [id])
+  orderId   String
+
+  product   Product @relation(fields: [productId], references: [id])
+  productId String
+}
+
+////////////////////////////////////////////////////////////
+// PAYMENTS
+// Registra los pagos asociados a un pedido.
+// Permite múltiples métodos o intentos de pago.
+////////////////////////////////////////////////////////////
+model Payment {
+  id        String        @id @default(uuid())
+  method    PaymentMethod
+  status    PaymentStatus
+  amount    Decimal       @db.Decimal(10,2)
+  createdAt DateTime      @default(now())
+
+  order   Order  @relation(fields: [orderId], references: [id])
+  orderId String
+}
+
+////////////////////////////////////////////////////////////
+// TABLES
+// Representa las mesas físicas del restaurante.
+// Útil para consumo en local (POS).
+////////////////////////////////////////////////////////////
+model Table {
+  id        String     @id @default(uuid())
+  number    Int
+  status    TableStatus @default(AVAILABLE)
+
+  restaurant   Restaurant @relation(fields: [restaurantId], references: [id])
+  restaurantId String
+}
+
+////////////////////////////////////////////////////////////
+// ORDER STATUS HISTORY
+// Guarda el historial de cambios de estado de un pedido.
+// Muy útil para auditoría y métricas.
+////////////////////////////////////////////////////////////
+model OrderStatusHistory {
+  id        String      @id @default(uuid())
+  status    OrderStatus
+  changedAt DateTime    @default(now())
+
+  order   Order  @relation(fields: [orderId], references: [id])
+  orderId String
+}
+
+////////////////////////////////////////////////////////////
+// ENUMS
+////////////////////////////////////////////////////////////
+enum UserRole {
+  ADMIN
+  KITCHEN
+  WAITER
+  CUSTOMER
+}
+
+enum OrderStatus {
+  PENDING
+  PREPARING
+  READY
+  DELIVERED
+  CANCELED
+}
+
+enum PaymentMethod {
+  CASH
+  CARD
+  ONLINE
+}
+
+enum PaymentStatus {
+  PENDING
+  PAID
+  FAILED
+}
+
+enum TableStatus {
+  AVAILABLE
+  OCCUPIED
+}
