@@ -1,11 +1,11 @@
 import { Image } from 'expo-image';
 import { Platform, StyleSheet } from 'react-native';
 
-import { Collapsible } from '@/components/ui/collapsible';
 import { ExternalLink } from '@/components/external-link';
 import ParallaxScrollView from '@/components/parallax-scroll-view';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
+import { Collapsible } from '@/components/ui/collapsible';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { Fonts } from '@/constants/theme';
 
@@ -30,7 +30,8 @@ export default function TabTwoScreen() {
           Explore
         </ThemedText>
       </ThemedView>
-      <ThemedText>This app includes example code to help you get started.</ThemedText>
+      <ThemedText>
+        Esta app incluye ejemplos de codigo para ayudarte a empezar. </ThemedText>
       <Collapsible title="File-based routing">
         <ThemedText>
           This app has two screens:{' '}
@@ -47,8 +48,8 @@ export default function TabTwoScreen() {
       </Collapsible>
       <Collapsible title="Android, iOS, and web support">
         <ThemedText>
-          You can open this project on Android, iOS, and the web. To open the web version, press{' '}
-          <ThemedText type="defaultSemiBold">w</ThemedText> in the terminal running this project.
+          Tu puedes abrir este proyecto en android, IOS, y web, para abrir la version web, presiona{' '}
+          <ThemedText type="defaultSemiBold">w</ThemedText> en la terminal que esta corriendo este proyecto.
         </ThemedText>
       </Collapsible>
       <Collapsible title="Images">
